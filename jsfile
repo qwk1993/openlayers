@@ -1,0 +1,134 @@
+var layerName = new Array(); //图层名称数组
+var layerVisibility = new Array(); //图层可见属性数组
+var layerNameSet = new Array('当前', '1天前', '2天前')
+
+
+/**
+ * 加载图层列表数据
+ * @param {ol.Map} map 地图对象
+ * @param {string} id 图层列表容器ID
+ */
+function loadLayersControl(map, id) {
+    var treeContent = document.getElementById(id); //图层目录容器
+
+    var layers = map.getLayers(); //获取地图中所有图层
+ 
+    for (var i = 0; i < layers.getLength() ; i++) {
+        //设置图层名称
+        layerName[i] = layerNameSet[i];
+        //新增li元素，用来承载图层项
+        var elementLi = document.createElement('li');
+        treeContent.appendChild(elementLi); // 添加子节点
+        //创建复选框元素
+        var elementInput = document.createElement('input');
+        elementInput.type = "radio";
+        elementInput.name = "layers";
+        elementLi.appendChild(elementInput);
+        //创建label元素
+        var elementLable = document.createElement('label');
+        elementLable.className = "layer";
+        //设置图层名称
+        setInnerText(elementLable, layerName[i]);
+        elementLi.appendChild(elementLable);
+                        
+    }
+}
+
+/**
+ * 动态设置元素文本内容（兼容）
+ */
+function setInnerText(element, text) {
+    if (typeof element.textContent == "string") {
+        element.textContent = text;
+    } else {
+        element.innerText = text;
+    }
+}
+
+function init() {
+    var mousePositionControl = new ol.control.MousePosition({
+        coordinateFormat: ol.coordinate.createStringXY(4), //坐标格式
+        projection: 'EPSG:4326', //地图投影坐标系
+        className: 'custom-mouse-position', //坐标信息显示样式
+        // 显示鼠标位置信息的目标容器
+        target: document.getElementById('mouse-position'),
+        undefinedHTML: '&nbsp' //未定义坐标的标记
+    });
+
+    //实例化Map对象加载地图
+    var map = new ol.Map({
+        target: 'map', //地图容器div的ID
+        //地图容器中加载的图层
+        layers: [
+            //加载瓦片图层数据
+            new ol.layer.Tile({
+                source: new ol.source.XYZ({
+                    url: 'http://www.google.cn/maps/vt?lyrs=s@189&gl=cn&x={x}&y={y}&z={z}'
+                }),
+                name: '世界地图'
+            }),
+
+            new ol.layer.Tile({
+                source: new ol.source.TileArcGISRest({
+                    url: 'http://localhost:6080/arcgis/rest/services/Lingang/ImageServer'
+                }),
+                name: '临港'
+            }),
+            new ol.layer.Tile({
+                source: new ol.source.TileArcGISRest({
+                    url: 'http://localhost:6080/arcgis/rest/services/Mosaic_update_10/ImageServer'
+                }),
+                name: '更新区域'
+            }),
+        ],
+        //地图视图设置
+        view: new ol.View({
+            center: [121.9290, 30.9056],
+            zoom: 12,
+            minZoom: 12,
+            maxZoom: 22,
+            projection: 'EPSG:4326',
+        }),
+        controls: ol.control.defaults().extend([mousePositionControl])
+
+    });
+    //加载图层列表数据
+    loadLayersControl(map, "layerTree");
+    //设置单选框响应事件（图层显示组合）
+    alert(document.getElementsByTagName('input').length);
+    var radioArrary = document.getElementsByTagName('input');
+    var layers = map.getLayers();
+    radioArrary[0].onclick = function () {
+        if (radioArrary[0].checked) {
+            layers.item(0).setVisible(true);
+            layers.item(1).setVisible(true);
+            layers.item(2).setVisible(true);
+        }
+        else {
+            layers.item(1).setVisible(false);
+            layers.item(2).setVisible(false);
+        }
+    }
+    radioArrary[1].onclick = function () {
+        if (radioArrary[1].checked) {
+            layers.item(0).setVisible(true);
+            layers.item(1).setVisible(true);
+            layers.item(2).setVisible(false);
+        }
+        else {
+            layers.item(1).setVisible(false);
+            layers.item(2).setVisible(false);
+        }
+    }
+    radioArrary[2].onclick = function () {
+        if (radioArrary[2].checked) {
+            layers.item(0).setVisible(true);
+            layers.item(1).setVisible(false);
+            layers.item(2).setVisible(false);
+        }
+        else {
+            layers.item(1).setVisible(false);
+            layers.item(2).setVisible(false);
+        }
+    }
+}
